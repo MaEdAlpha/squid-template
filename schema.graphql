@@ -1,13 +1,127 @@
-type Account @entity {
+union Resources = NFTParentResources | NFTChildResource
+union BaseParts = FixedParts | EquippableParts
+
+type Remarks @entity {
   "Account address"
   id: ID!
-  balance: BigInt!
-  historicalBalances: [HistoricalBalance!] @derivedFrom(field: "account")
+  remarks: String
 }
 
-type HistoricalBalance @entity {
-  id: ID!
-  account: Account!
-  balance: BigInt!
-  date: DateTime!
+type BatchAll @entity {
+  calls: [String]!
 }
+
+
+type Collections @entity{
+    changes: [String]
+    block: Int!
+    max: Int!
+    issuer: String!
+    symbol: String!
+    id: ID!
+    metadata: String!
+}
+
+type FixedParts {
+    type: String!
+    id: ID!
+    src: String!
+    z: Int!
+}
+
+type EquippableParts{
+    equippable: [String]
+    type: String!
+    id: ID!
+    z: Int!
+}
+
+type NFTChildren {
+    id: String!
+    pending: Boolean
+    equipped: String!
+    childNft: NFTS
+}
+
+type Base @entity{
+    id: ID!
+    block: Int! 
+    symbol: String!
+    type: String!
+    issuer: String!
+    parts: [BaseParts]!
+}
+
+type NFTParentResources {
+    pending: Boolean!
+    id: ID!
+    base: String!
+    parts: [String]!
+    thumb: String!
+
+}
+
+type NFTChildResource {
+    pending: Boolean!
+    id: ID!
+    slot: String!
+    thumb: String!
+    childNfts: NFTS
+}
+
+type NFTS @entity{
+    changes: [String]
+    children: [NFTChildren] @derivedFrom(field: "childNfts")
+    resources: [Resources] @derivedFrom(field: "nfts")
+    block: Int!
+    collection: String!
+    symbol: String!
+    transferable: Int!
+    sn: String!
+    metadata: String!
+    priority: [String]
+    owner: String!
+    rootowner: String!
+    forsale: String!
+    burned: String
+    properties: Properties 
+    pending: Boolean!
+    id: ID!
+}
+
+type Properties {
+  royaltyInfo: RoyaltyValue 
+  attributes: AttrributeValue 
+}
+
+type AttrributeValue {
+  type: String
+  value: NftAttributesValue 
+  attributeProps: Properties! 
+}
+
+type RoyaltyValue {
+  type: String
+  value: RoyaltyInfoValue 
+  royaltyProps: Properties! 
+}
+
+
+type RoyaltyInfoValue {
+  royaltyPercentFloat: String, 
+  reciever: String!
+  royaltyvalue: RoyaltyValue
+}
+
+type NftAttributesValue {
+  health: String 
+  attack: String 
+  defense:  String 
+  speed:  String 
+  rarity:  String 
+  class:  String 
+  race:  String
+  typevalue: AttrributeValue
+}
+
+

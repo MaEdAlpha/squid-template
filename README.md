@@ -306,3 +306,29 @@ More details will be added later.
 ## Disclaimer
 
 This is alpha-quality software. Expect some bugs and incompatible changes in coming weeks.
+
+
+
+<!-- """
+type Collections @entity{
+    changes: [String]
+    block: Int!
+    max: Int!
+    issuer: String!
+    symbol: String!
+    id: d43593c715a56da27d-WGL  or d43593c715a56da27d-WGLITMS
+    metadata: String!
+}
+
+
+type Base @entity{
+    id: base-bn-symbol
+    symbol: String!
+    type: String!
+    issuer: String!
+    parts: [Parts]!
+}
+
+
+
+""" -->

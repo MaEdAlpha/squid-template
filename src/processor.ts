@@ -1,12 +1,24 @@
 import * as ss58 from "@subsquid/ss58";
 import {
-  EventHandlerContext,
+  ExtrinsicHandlerContext,
   Store,
   SubstrateProcessor,
 } from "@subsquid/substrate-processor";
 import { lookupArchive } from "@subsquid/archive-registry";
-import { Account, HistoricalBalance } from "./model";
-import { BalancesTransferEvent } from "./types/events";
+import { Remarks } from "./model/generated/remarks.model";
+import { Base } from "./model/generated/base.model";
+import { getBatchAllExtrinsic, getRemarksExtrinsic } from "./extrinsic_helpers";
+import { ISSUER , RMRK_COMMAND} from "./constants";
+import {
+  getBaseRMRK,
+  getCreateRMRK,
+  getMintRMRK,
+  getRessAddRMR,
+  getSetPriorityRMRK,
+  getSendRMRK,
+  getEquipRMRK } from "./store_rmrk";
+import { BaseParts, BatchAll, Collections, EquippableParts, FixedParts, NFTS } from "./model";
+
 
 const processor = new SubstrateProcessor("kusama_balances");
 
@@ -16,65 +28,43 @@ processor.setDataSource({
   chain: "wss://kusama-rpc.polkadot.io",
 });
 
-processor.addEventHandler("balances.Transfer", async (ctx) => {
-  const transfer = getTransferEvent(ctx);
-  const tip = ctx.extrinsic?.tip || 0n;
-  const from = ss58.codec("kusama").encode(transfer.from);
-  const to = ss58.codec("kusama").encode(transfer.to);
+processor.setBlockRange({from:12000000, to: 12400000});
 
-  const fromAcc = await getOrCreate(ctx.store, Account, from);
-  fromAcc.balance = fromAcc.balance || 0n;
-  fromAcc.balance -= transfer.amount;
-  fromAcc.balance -= tip;
-  await ctx.store.save(fromAcc);
-
-  const toAcc = await getOrCreate(ctx.store, Account, to);
-  toAcc.balance = toAcc.balance || 0n;
-  toAcc.balance += transfer.amount;
-  await ctx.store.save(toAcc);
-
-  await ctx.store.save(
-    new HistoricalBalance({
-      id: `${ctx.event.id}-to`,
-      account: fromAcc,
-      balance: fromAcc.balance,
-      date: new Date(ctx.block.timestamp),
-    })
-  );
-
-  await ctx.store.save(
-    new HistoricalBalance({
-      id: `${ctx.event.id}-from`,
-      account: toAcc,
-      balance: toAcc.balance,
-      date: new Date(ctx.block.timestamp),
-    })
-  );
-});
+processor.addExtrinsicHandler("system.remark", processRemarks);
+processor.addExtrinsicHandler("utility.batch_all",processBatchAll);
 
 processor.run();
 
-interface TransferEvent {
-  from: Uint8Array;
-  to: Uint8Array;
-  amount: bigint;
+//remove, do not need this.
+
+async function processRemarks(ctx: ExtrinsicHandlerContext): Promise<void> {
+
+  try{
+    const remarksData = getRemarksExtrinsic(ctx); //remark string you need to parse.
+  
+    const remark =  await getOrCreate(ctx.store, Remarks, ctx.extrinsic.id.toString());
+    remark.remarks = remarksData.toString();
+    await ctx.store.save(remark);
+
+    await parseRMRKData(remarksData.toString(), ctx); //send data in to save to db.
+
+  } catch(e) {
+    console.log(e);
+  } 
 }
 
-function getTransferEvent(ctx: EventHandlerContext): TransferEvent {
-  const event = new BalancesTransferEvent(ctx);
-  if (event.isV1020) {
-    const [from, to, amount] = event.asV1020;
-    return { from, to, amount };
+async function processBatchAll(ctx: ExtrinsicHandlerContext): Promise<void> {
+  try{
+    const batchedRemarks = getBatchAllExtrinsic(ctx); // should return an array.
+    console.log(batchedRemarks);
+
+    // const batchAll =  await getOrCreate(ctx.store, BatchAll, ctx.extrinsic.id.toString());
+    // await ctx.store.save(batchAll);
+
+  }catch(e){
+    console.log("BatchAll error");
+    console.log(e);
   }
-  if (event.isV1050) {
-    const [from, to, amount] = event.asV1050;
-    return { from, to, amount };
-  }
-  if (event.isV9130) {
-    const { from, to, amount } = event.asV9130;
-    return { from, to, amount };
-  }
-  return event.asLatest;
 }
 
 async function getOrCreate<T extends { id: string }>(
@@ -94,6 +84,151 @@ async function getOrCreate<T extends { id: string }>(
   return entity;
 }
 
+async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise<void> {
+  //unpack
+  const [name, command, ver, content1, content2, content3 ] = rmrk.split('::');
+  if(name !== 'RMRK' || ver !== '2.0.0'){
+    //skip parse, data is not relevant.
+    return;
+  } else {
+
+    switch(command) {
+      case RMRK_COMMAND.BASE:
+        if(ctx.extrinsic.signer === ISSUER){ 
+          const baseObj = await getBaseRMRK(content1);
+            const baseID = 'base-'+ ctx.block.height + '-' + baseObj.symbol;
+            const nftBases = await getOrCreate(ctx.store, Base, baseID);
+            // console.log("Block height: ", ctx.block.height);
+            // console.log("Signer: ", ctx.extrinsic.signer);
+            // console.log(baseObj.parts?.forEach(part => console.log(part)));
+            // cannot do below, changes Type to Object literal, removes Entity type.
+            // nftBases = {...baseObj, id: baseID, type: 'svg'}
+            nftBases.id = baseID;
+            nftBases.block = ctx.block.height;
+            nftBases.symbol = baseObj.symbol;
+            nftBases.issuer = baseObj.issuer;
+            //.map() not necessary, maybe keep for now when testing bugs
+            nftBases.parts = baseObj.parts?.map(part=>{ return part!.hasOwnProperty("equippable") ? new EquippableParts(part as EquippableParts) : new FixedParts(part as FixedParts)});
+            nftBases.type = "svg";
+    
+            await ctx.store.save(nftBases);
+          
+        }
+
+
+        break;
+
+      case RMRK_COMMAND.CREATE:
+        //Collection creation
+        if(ctx.extrinsic.signer === ISSUER){
+          const collectionObj = await getCreateRMRK(content1);
+          if(collectionObj){
+            
+            const nftCollection = await getOrCreate(ctx.store, Collections, collectionObj.id);
+            
+            nftCollection.block = ctx.block.height;
+            nftCollection.max = collectionObj.max;
+            nftCollection.issuer = collectionObj.issuer;
+            nftCollection.metadata = collectionObj.metadata;
+            nftCollection.id = collectionObj.id;
+            nftCollection.changes = collectionObj.changes ? collectionObj.changes : [];
+            nftCollection.symbol = collectionObj.symbol;
+            console.log(`wrote Collection: ${nftCollection.id}`)
+            await ctx.store.save(nftCollection);
+          }
+        }
+        break;
+
+      case RMRK_COMMAND.MINT:
+        //Mint multiple cases now
+        const nft = await getMintRMRK(content1);
+
+        if(nft.collection.endsWith("-WGLITMS")){
+          //I am equippable
+          console.log(nft);
+          console.log('EquippableNFT');
+        }
+        
+        if(nft.collection.endsWith("-WGL")){
+          console.log('BaseNFT');
+          console.log(nft);
+          //I am base NFT block collection symbol sn
+          const nftBaseID = `${ctx.block.height}-${nft.collection}-${nft.symbol}-${nft.sn}`;
+          const nftAsset = await getOrCreate(ctx.store, NFTS, nftBaseID);
+          nftAsset.block = ctx.block.height;
+          nftAsset.collection = nft.collection;
+          nftAsset.symbol = nft.symbol;
+          nftAsset.transferable = nft.transferable;
+          nftAsset.sn = nft.sn;
+          nftAsset.metadata =nft.metadata;
+          nftAsset.owner = ISSUER;
+          nftAsset.rootowner = ISSUER;
+          nftAsset.forsale = "addIntoMintingCode";
+          nftAsset.properties = nft.properties;
+          nftAsset.pending = false;
+          nftAsset.id = nftBaseID;
+          console.log(nftAsset);
+          await ctx.store.save(nftAsset);
+
+        }
+
+        break;
+
+      case RMRK_COMMAND.RESADD:
+
+        break;
+
+      case RMRK_COMMAND.SETPRIORITY:
+
+        break;
+
+      case RMRK_COMMAND.SEND:
+
+        break;
+
+      case RMRK_COMMAND.EQUIP:
+
+        break;
+
+      case RMRK_COMMAND.DESTROY:
+
+        break;
+
+      case RMRK_COMMAND.LIST:
+
+        break;
+      case "CHANGEISSUER":
+
+        break;
+      case "EMOTE":
+        break;
+      case "ACCEPT":
+       break;
+      case "EQUIPPABLE":
+       break;
+
+      default:
+        console.debug('No function for: ', command);
+        break;
+    }
+  }
+
+}
+
+
+function stringifyArray(list: any[]): any[] {
+  let listStr : any[] = [];
+  list = list[0]
+  for (let vec of list){
+    for (let i = 0; i < vec.length; i++){
+      vec[i] = String(vec[i]);
+    }
+    listStr.push(vec);
+  }
+  return listStr
+}
+
 type EntityConstructor<T> = {
   new (...args: any[]): T;
 };
+
