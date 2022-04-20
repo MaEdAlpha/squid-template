@@ -1,8 +1,8 @@
-import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_} from "typeorm"
+import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, OneToOne as OneToOne_} from "typeorm"
 import * as marshal from "./marshal"
 import {NFTChildren} from "./_nftChildren"
 import {Resources, fromJsonResources} from "./_resources"
-import {Properties} from "./_properties"
+import {Properties} from "./properties.model"
 
 @Entity_()
 export class NFTS {
@@ -52,7 +52,7 @@ export class NFTS {
   @Column_("text", {nullable: true})
   burned!: string | undefined | null
 
-  @Column_("jsonb", {transformer: {to: obj => obj == null ? undefined : obj.toJSON(), from: obj => obj == null ? undefined : new Properties(undefined, obj)}, nullable: true})
+  @OneToOne_(() => Properties)
   properties!: Properties | undefined | null
 
   @Column_("bool", {nullable: false})

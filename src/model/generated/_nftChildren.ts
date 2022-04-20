@@ -5,7 +5,7 @@ import {NFTS} from "./nfts.model"
 export class NFTChildren {
   private _id!: string
   private _pending!: boolean | undefined | null
-  private _equipped!: string
+  private _equipped!: string | undefined | null
   private _childNft!: string | undefined | null
 
   constructor(props?: Partial<Omit<NFTChildren, 'toJSON'>>, json?: any) {
@@ -13,7 +13,7 @@ export class NFTChildren {
     if (json != null) {
       this._id = marshal.string.fromJSON(json.id)
       this._pending = json.pending == null ? undefined : marshal.boolean.fromJSON(json.pending)
-      this._equipped = marshal.string.fromJSON(json.equipped)
+      this._equipped = json.equipped == null ? undefined : marshal.string.fromJSON(json.equipped)
       this._childNft = json.childNft == null ? undefined : marshal.string.fromJSON(json.childNft)
     }
   }
@@ -35,12 +35,11 @@ export class NFTChildren {
     this._pending = value
   }
 
-  get equipped(): string {
-    assert(this._equipped != null, 'uninitialized access')
+  get equipped(): string | undefined | null {
     return this._equipped
   }
 
-  set equipped(value: string) {
+  set equipped(value: string | undefined | null) {
     this._equipped = value
   }
 

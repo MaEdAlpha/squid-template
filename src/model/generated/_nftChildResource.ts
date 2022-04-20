@@ -4,56 +4,52 @@ import {NFTS} from "./nfts.model"
 
 export class NFTChildResource {
   public readonly isTypeOf = 'NFTChildResource'
-  private _pending!: boolean
-  private _id!: string
-  private _slot!: string
-  private _thumb!: string
+  private _pending!: boolean | undefined | null
+  private _id!: string | undefined | null
+  private _slot!: string | undefined | null
+  private _thumb!: string | undefined | null
   private _childNfts!: string | undefined | null
 
   constructor(props?: Partial<Omit<NFTChildResource, 'toJSON'>>, json?: any) {
     Object.assign(this, props)
     if (json != null) {
-      this._pending = marshal.boolean.fromJSON(json.pending)
-      this._id = marshal.id.fromJSON(json.id)
-      this._slot = marshal.string.fromJSON(json.slot)
-      this._thumb = marshal.string.fromJSON(json.thumb)
+      this._pending = json.pending == null ? undefined : marshal.boolean.fromJSON(json.pending)
+      this._id = json.id == null ? undefined : marshal.id.fromJSON(json.id)
+      this._slot = json.slot == null ? undefined : marshal.string.fromJSON(json.slot)
+      this._thumb = json.thumb == null ? undefined : marshal.string.fromJSON(json.thumb)
       this._childNfts = json.childNfts == null ? undefined : marshal.string.fromJSON(json.childNfts)
     }
   }
 
-  get pending(): boolean {
-    assert(this._pending != null, 'uninitialized access')
+  get pending(): boolean | undefined | null {
     return this._pending
   }
 
-  set pending(value: boolean) {
+  set pending(value: boolean | undefined | null) {
     this._pending = value
   }
 
-  get id(): string {
-    assert(this._id != null, 'uninitialized access')
+  get id(): string | undefined | null {
     return this._id
   }
 
-  set id(value: string) {
+  set id(value: string | undefined | null) {
     this._id = value
   }
 
-  get slot(): string {
-    assert(this._slot != null, 'uninitialized access')
+  get slot(): string | undefined | null {
     return this._slot
   }
 
-  set slot(value: string) {
+  set slot(value: string | undefined | null) {
     this._slot = value
   }
 
-  get thumb(): string {
-    assert(this._thumb != null, 'uninitialized access')
+  get thumb(): string | undefined | null {
     return this._thumb
   }
 
-  set thumb(value: string) {
+  set thumb(value: string | undefined | null) {
     this._thumb = value
   }
 

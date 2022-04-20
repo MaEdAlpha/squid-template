@@ -9,6 +9,6 @@ export class BatchAll {
   @PrimaryColumn_()
   id!: string
 
-  @Column_("text", {array: true, nullable: false})
-  calls!: (string | undefined | null)[]
+  @Column_("text", {array: true, nullable: true})
+  calls!: (string | undefined | null)[] | undefined | null
 }

@@ -8,7 +8,7 @@ type Remarks @entity {
 }
 
 type BatchAll @entity {
-  calls: [String]!
+  calls: [String]
 }
 
 
@@ -31,7 +31,7 @@ type FixedParts {
 
 type EquippableParts{
     equippable: [String]
-    type: String!
+    type: String
     id: ID!
     z: Int!
 }
@@ -39,7 +39,7 @@ type EquippableParts{
 type NFTChildren {
     id: String!
     pending: Boolean
-    equipped: String!
+    equipped: String
     childNft: NFTS
 }
 
@@ -53,19 +53,19 @@ type Base @entity{
 }
 
 type NFTParentResources {
-    pending: Boolean!
-    id: ID!
-    base: String!
-    parts: [String]!
-    thumb: String!
+    pending: Boolean
+    id: ID
+    base: String
+    parts: [String]
+    thumb: String
 
 }
 
 type NFTChildResource {
-    pending: Boolean!
-    id: ID!
-    slot: String!
-    thumb: String!
+    pending: Boolean
+    id: ID
+    slot: String
+    thumb: String
     childNfts: NFTS
 }
 
@@ -84,26 +84,29 @@ type NFTS @entity{
     rootowner: String!
     forsale: String!
     burned: String
-    properties: Properties 
+    properties: Properties @derivedFrom(field: "nftProperties")
     pending: Boolean!
     id: ID!
 }
 
-type Properties {
+type Properties @entity{
   royaltyInfo: RoyaltyValue 
   attributes: AttrributeValue 
+  itemAttributes: AttrributeValue
+  baseAttributes: AttrributeValue
+  nftProperties: NFTS! @unique
 }
 
-type AttrributeValue {
+type AttrributeValue  {
   type: String
   value: NftAttributesValue 
-  attributeProps: Properties! 
+  attributeProps: Properties 
 }
 
 type RoyaltyValue {
   type: String
   value: RoyaltyInfoValue 
-  royaltyProps: Properties! 
+  royaltyProps: Properties 
 }
 
 
@@ -123,5 +126,3 @@ type NftAttributesValue {
   race:  String
   typevalue: AttrributeValue
 }
-
-

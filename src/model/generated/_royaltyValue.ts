@@ -1,19 +1,19 @@
 import assert from "assert"
 import * as marshal from "./marshal"
 import {RoyaltyInfoValue} from "./_royaltyInfoValue"
-import {Properties} from "./_properties"
+import {Properties} from "./properties.model"
 
 export class RoyaltyValue {
   private _type!: string | undefined | null
   private _value!: RoyaltyInfoValue | undefined | null
-  private _royaltyProps!: Properties
+  private _royaltyProps!: string | undefined | null
 
   constructor(props?: Partial<Omit<RoyaltyValue, 'toJSON'>>, json?: any) {
     Object.assign(this, props)
     if (json != null) {
       this._type = json.type == null ? undefined : marshal.string.fromJSON(json.type)
       this._value = json.value == null ? undefined : new RoyaltyInfoValue(undefined, json.value)
-      this._royaltyProps = new Properties(undefined, marshal.nonNull(json.royaltyProps))
+      this._royaltyProps = json.royaltyProps == null ? undefined : marshal.string.fromJSON(json.royaltyProps)
     }
   }
 
@@ -33,12 +33,11 @@ export class RoyaltyValue {
     this._value = value
   }
 
-  get royaltyProps(): Properties {
-    assert(this._royaltyProps != null, 'uninitialized access')
+  get royaltyProps(): string | undefined | null {
     return this._royaltyProps
   }
 
-  set royaltyProps(value: Properties) {
+  set royaltyProps(value: string | undefined | null) {
     this._royaltyProps = value
   }
 
@@ -46,7 +45,7 @@ export class RoyaltyValue {
     return {
       type: this.type,
       value: this.value == null ? undefined : this.value.toJSON(),
-      royaltyProps: this.royaltyProps.toJSON(),
+      royaltyProps: this.royaltyProps,
     }
   }
 }

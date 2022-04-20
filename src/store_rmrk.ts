@@ -1,5 +1,5 @@
 
-import { Collections, Base, NFTS } from './model';
+import { Collections, Base, NFTS, Resources } from './model';
 
 export async function getBaseRMRK(data: string){
     //convert string into json data then assign create Base instance, verify mint address === issuer.
@@ -16,6 +16,25 @@ export async function getCreateRMRK(data:string): Promise<Collections>{
 export async function getMintRMRK(data:string): Promise<NFTS>{
     const jsonData: NFTS = getJSON(data);
     return jsonData;
+}
+
+
+
+export async function getResourceAddRMRK(data:string): Promise<Resources>{
+    const jsonData: Resources = getJSON(data);
+    return jsonData;
+}
+
+export async function getSetPriorityRMRK(data:string): Promise<boolean>{
+    return true;
+}
+
+export async function getSendRMRK(data:string): Promise<boolean>{
+    return true;
+}
+
+export async function getEquipRMRK(data:string): Promise<boolean>{
+    return true;
 }
 
 export async function getRMRK(data:string, opType:string): Promise<Collections | NFTS | Base | undefined>{
@@ -37,22 +56,6 @@ export async function getRMRK(data:string, opType:string): Promise<Collections |
     }
 
     return jsonData;
-}
-
-export async function getRessAddRMR(data:string): Promise<boolean>{
-    return true;
-}
-
-export async function getSetPriorityRMRK(data:string): Promise<boolean>{
-    return true;
-}
-
-export async function getSendRMRK(data:string): Promise<boolean>{
-    return true;
-}
-
-export async function getEquipRMRK(data:string): Promise<boolean>{
-    return true;
 }
 
 function getJSON(str:string){

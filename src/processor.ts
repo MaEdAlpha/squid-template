@@ -8,17 +8,17 @@ import { lookupArchive } from "@subsquid/archive-registry";
 import { Remarks } from "./model/generated/remarks.model";
 import { Base } from "./model/generated/base.model";
 import { getBatchAllExtrinsic, getRemarksExtrinsic } from "./extrinsic_helpers";
-import { ISSUER , RMRK_COMMAND} from "./constants";
+import { BASE_TAG, COLLECTION_BASE_TAG, COLLECTION_ITEM_TAG, ISSUER , ITEMS_TAG, RMRK_COMMAND} from "./constants";
 import {
   getBaseRMRK,
   getCreateRMRK,
   getMintRMRK,
-  getRessAddRMR,
+  getResourceAddRMRK,
   getSetPriorityRMRK,
   getSendRMRK,
   getEquipRMRK } from "./store_rmrk";
-import { BaseParts, BatchAll, Collections, EquippableParts, FixedParts, NFTS } from "./model";
-
+import { BaseParts, BatchAll, Collections, EquippableParts, FixedParts, NFTS, Properties } from "./model";
+import { Buffer } from 'buffer';
 
 const processor = new SubstrateProcessor("kusama_balances");
 
@@ -28,7 +28,7 @@ processor.setDataSource({
   chain: "wss://kusama-rpc.polkadot.io",
 });
 
-processor.setBlockRange({from:12000000, to: 12400000});
+processor.setBlockRange({from:12099600, to: 12400000});
 
 processor.addExtrinsicHandler("system.remark", processRemarks);
 processor.addExtrinsicHandler("utility.batch_all",processBatchAll);
@@ -55,17 +55,43 @@ async function processRemarks(ctx: ExtrinsicHandlerContext): Promise<void> {
 
 async function processBatchAll(ctx: ExtrinsicHandlerContext): Promise<void> {
   try{
-    const batchedRemarks = getBatchAllExtrinsic(ctx); // should return an array.
-    console.log(batchedRemarks);
+    // const batchedRemarks = getBatchAllExtrinsic(ctx); // should return an array.
+    // console.log(batchedRemarks);
+    let ksmHackObject: any = ctx.extrinsic.args[0].value;
+    const filteredData = ksmHackObject.filter( (arg: { args: any, callIndex: string; }) => {
+      if(arg.callIndex === '0x0001' && !arg.args.remark.toString().includes("3A3A312A302A303A3A") ){ //filters out ::1.0.0::
+        
+        let hexStr = arg.args.remark.toString().slice(2);
+        const buf = Buffer.from(hexStr, 'hex' );
+        const remarkString = buf.toString('utf8');
 
-    // const batchAll =  await getOrCreate(ctx.store, BatchAll, ctx.extrinsic.id.toString());
-    // await ctx.store.save(batchAll);
+        if(remarkString.toLowerCase().includes("-wgl")){
+          //console.log(remarkString); //DEBUG
+          return true;
+        }
+        return false;
+      }
+    });
+
+    if( filteredData.length > 0 ){
+      //process remarkData.
+      for( let i = 0; i < filteredData.length; i++){
+
+        let hexStr = filteredData[i].args.remark.toString().slice(2);
+        const buf = Buffer.from(hexStr, 'hex' );
+        const remarkString = buf.toString('utf8');
+
+        await parseRMRKData(remarkString, ctx);
+      }
+    }
 
   }catch(e){
-    console.log("BatchAll error");
+    console.log("BatchAll error: ");
     console.log(e);
   }
 }
+
+
 
 async function getOrCreate<T extends { id: string }>(
   store: Store,
@@ -91,6 +117,10 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
     //skip parse, data is not relevant.
     return;
   } else {
+
+    if(rmrk.includes(BASE_TAG) || rmrk.includes(ITEMS_TAG)){
+      console.log(rmrk);
+    }
 
     switch(command) {
       case RMRK_COMMAND.BASE:
@@ -142,19 +172,14 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
       case RMRK_COMMAND.MINT:
         //Mint multiple cases now
         const nft = await getMintRMRK(content1);
-
-        if(nft.collection.endsWith("-WGLITMS")){
+        const nftRecordID = `${ctx.block.height}-${nft.collection}-${nft.symbol}-${nft.sn}`;
+        const nftAsset = await getOrCreate(ctx.store, NFTS, nftRecordID);
+        const parentNFT = nft.collection.endsWith(COLLECTION_ITEM_TAG);
+        const childNFT = nft.collection.endsWith(COLLECTION_BASE_TAG);
+        if(parentNFT){  //change collection to MUN1V3RS31TMS
           //I am equippable
-          console.log(nft);
-          console.log('EquippableNFT');
-        }
-        
-        if(nft.collection.endsWith("-WGL")){
-          console.log('BaseNFT');
-          console.log(nft);
-          //I am base NFT block collection symbol sn
-          const nftBaseID = `${ctx.block.height}-${nft.collection}-${nft.symbol}-${nft.sn}`;
-          const nftAsset = await getOrCreate(ctx.store, NFTS, nftBaseID);
+
+          let properties = new Properties({...nft.properties});
           nftAsset.block = ctx.block.height;
           nftAsset.collection = nft.collection;
           nftAsset.symbol = nft.symbol;
@@ -166,45 +191,117 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
           nftAsset.forsale = "addIntoMintingCode";
           nftAsset.properties = nft.properties;
           nftAsset.pending = false;
-          nftAsset.id = nftBaseID;
+          nftAsset.id = nftRecordID;
           console.log(nftAsset);
-          await ctx.store.save(nftAsset);
-
-        }
+          await ctx.store.save(nftAsset).then(()=>{
+            console.log("NFT Successful!");
+          }).catch((e)=>{
+            console.log('NFT SaveError: ', e);
+          });
+        } else if(childNFT){  //change collection to MUN1V3RS31TMS
+          //I am equippable  
+ 
+          nftAsset.block = ctx.block.height;
+          nftAsset.collection = nft.collection;
+          nftAsset.symbol = nft.symbol;
+          nftAsset.transferable = nft.transferable;
+          nftAsset.sn = nft.sn;
+          nftAsset.metadata =nft.metadata;
+          nftAsset.owner = ISSUER;
+          nftAsset.rootowner = ISSUER;
+          nftAsset.forsale = "addIntoMintingCode";
+          nftAsset.properties = nft.properties;
+          nftAsset.pending = false;
+          nftAsset.id = nftRecordID;
+          console.log(nftAsset);
+          await ctx.store.save(nftAsset).then(()=>{
+            console.log("NFT CHILD Successful!");
+          }).catch((e)=>{
+            console.log('NFT SaveError: ', e);
+          });
+        } 
 
         break;
 
       case RMRK_COMMAND.RESADD:
-
+        if(content2){
+          const resourceObject = await getResourceAddRMRK(content2);
+          const resourceID = content1;
+          console.log(ctx.block.height);
+          if(resourceID.includes(BASE_TAG) || resourceID.includes(ITEMS_TAG)){
+            console.log(resourceID);
+            console.log(resourceObject);
+          } 
+  
+          const addResourceToNFT = await getOrCreate(ctx.store, NFTS, resourceID);
+          
+          if(resourceID.includes(BASE_TAG)){
+            addResourceToNFT.resources?.push(resourceObject);
+            ctx.store.save(addResourceToNFT).then(()=>{
+              console.log("AddedRes to base Successful!");
+            }).catch((e)=>{
+              console.log('RESADD_BASE SaveError: ', e);
+            });  
+            break;       
+          }else if( resourceID.includes(ITEMS_TAG)){
+            //append to correct nft
+            addResourceToNFT.resources?.push(resourceObject);
+            ctx.store.save(addResourceToNFT).then(()=>{
+              console.log("AddedRes to Item Successful!");
+            }).catch((e)=>{
+              console.log(resourceID);
+              console.log(resourceObject);
+              console.log('RESADD_ITEM SaveError: ', e);
+            }); 
+            break;
+          }
+        }
         break;
 
       case RMRK_COMMAND.SETPRIORITY:
+       //Append resources to NFT
+       if(content1.includes(BASE_TAG) || content1.includes(ITEMS_TAG)){
+         const nftPrioritySet = await getOrCreate(ctx.store, NFTS, content1);
+         const priorityArray = decodeURIComponent(content2) as unknown as Array<string>;
+         
+         nftPrioritySet.priority = priorityArray;
+        //  ctx.store.save(nftPrioritySet).then(()=>{
+        //    console.log("Priority Set and saved successfully!");
+        //  }).catch((e)=>{
+        //    console.log(priorityArray);
+        //    console.log('Priority SaveError: ', e);
 
+        //  });
+       } 
         break;
 
       case RMRK_COMMAND.SEND:
-
+       //Change nft owner [assigns to parent]
         break;
 
       case RMRK_COMMAND.EQUIP:
-
+        // change nft and equipabble owner
         break;
 
       case RMRK_COMMAND.DESTROY:
-
+        // change owner of nft and state
         break;
 
       case RMRK_COMMAND.LIST:
-
+        // change nft property
         break;
       case "CHANGEISSUER":
-
+        //not sure what this does yet
         break;
       case "EMOTE":
+        //not sure what this does yet
         break;
       case "ACCEPT":
+        //not sure what this does yet
        break;
       case "EQUIPPABLE":
+        //not sure what this does yet
+
        break;
 
       default:

@@ -4,7 +4,7 @@ import * as marshal from "./marshal"
 export class EquippableParts {
   public readonly isTypeOf = 'EquippableParts'
   private _equippable!: (string | undefined | null)[] | undefined | null
-  private _type!: string
+  private _type!: string | undefined | null
   private _id!: string
   private _z!: number
 
@@ -12,7 +12,7 @@ export class EquippableParts {
     Object.assign(this, props)
     if (json != null) {
       this._equippable = json.equippable == null ? undefined : marshal.fromList(json.equippable, val => val == null ? undefined : marshal.string.fromJSON(val))
-      this._type = marshal.string.fromJSON(json.type)
+      this._type = json.type == null ? undefined : marshal.string.fromJSON(json.type)
       this._id = marshal.id.fromJSON(json.id)
       this._z = marshal.int.fromJSON(json.z)
     }
@@ -26,12 +26,11 @@ export class EquippableParts {
     this._equippable = value
   }
 
-  get type(): string {
-    assert(this._type != null, 'uninitialized access')
+  get type(): string | undefined | null {
     return this._type
   }
 
-  set type(value: string) {
+  set type(value: string | undefined | null) {
     this._type = value
   }
 
