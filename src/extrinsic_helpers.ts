@@ -1,22 +1,5 @@
-import { EventHandlerContext, ExtrinsicHandlerContext,  } from "@subsquid/substrate-processor";
+import {ExtrinsicHandlerContext,  } from "@subsquid/substrate-processor";
 import { SystemRemarkCall, UtilityBatchAllCall } from "./types/calls";
-import { SystemCall_remark, Type_179 } from "./types/v2026";
-import { Type_184 } from "./types/v2028";
-import { Type_184 as Type_184_29 } from "./types/v2029";
-import { Type_123 } from "./types/v9040";
-import { Type_123 as Type_123_30 } from "./types/v2030";
-import { Type_123 as Type_123_9010 } from "./types/v9010";
-import { Type_123 as Type_123_9040 } from "./types/v9040";
-import { Type_124 as Type_124_9050 } from "./types/v9050";
-import { Type_125 } from "./types/v9080";
-import  { Type_125 as Type_125_9090 } from "./types/v9090";
-import  { Type_125 as Type_125_9100 } from "./types/v9100";
-import { Call } from "./types/v9111";
-import { Call as Call_22 } from "./types/v9122";
-import { Call as Call_30 } from "./types/v9130";
-import { Call as Call_60 } from "./types/v9160";
-import { Call as Call_70 } from "./types/v9170";
-import { Call as Call_80 } from "./types/v9180";
 
 
 export function getRemarksExtrinsic(ctx: ExtrinsicHandlerContext): Uint8Array {
@@ -34,28 +17,6 @@ export function getRemarksExtrinsic(ctx: ExtrinsicHandlerContext): Uint8Array {
     }
     throw new Error("No Runtime Version Found for Extrinsic");
 }
-
-// (
-//     Type_179[] | 
-//     Type_184[] |
-//     Type_184_29[] |
-//     Type_123[] |
-//     Type_123_30[] |
-//     Type_123_9010[] |
-//     Type_123_9040[] |
-//     Type_124_9050[] |
-//     Type_125[] |
-//     Type_125_9090[] |
-//     Type_125_9090[] |
-//     Type_125_9100[] |
-//     Call[] |
-//     Call_22[] |
-//     Call_30[] |
-//     Call_60[] |
-//     Call_70[] |
-//     Call_80[]    
-//     ) 
-
 
 export function getBatchAllExtrinsic(ctx: ExtrinsicHandlerContext)
 : String{

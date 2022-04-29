@@ -1,4 +1,4 @@
-import * as ss58 from "@subsquid/ss58";
+
 import {
   ExtrinsicHandlerContext,
   Store,
@@ -7,19 +7,14 @@ import {
 import { lookupArchive } from "@subsquid/archive-registry";
 import { Remarks } from "./model/generated/remarks.model";
 import { Base } from "./model/generated/base.model";
-import { getBatchAllExtrinsic, getRemarksExtrinsic } from "./extrinsic_helpers";
+import { getRemarksExtrinsic } from "./extrinsic_helpers";
 import { BASE_TAG, COLLECTION_BASE_TAG, COLLECTION_ITEM_TAG, ISSUER , ITEMS_TAG, RMRK_COMMAND} from "./constants";
 import {
   getBaseRMRK,
   getCreateRMRK,
-  getMintNFTRMRK,
-  getSetPriorityRMRK,
-  getSendRMRK,
-  getEquipRMRK, 
   NFTChildResourcesAddRMRK,
   NFTParentResourcesAddRMRK} from "./store_rmrk";
 import { 
-   BaseParts,
    Collections,
    EquippableParts,
    FixedParts,
@@ -28,7 +23,6 @@ import {
    Properties,
    NFTChildResource,
    NFTResource,
-   ResourceType,
    NFTChildren,
    ChangeLog} from "./model";
 import { Buffer } from 'buffer';
