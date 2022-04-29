@@ -4,19 +4,19 @@ import * as marshal from "./marshal"
 export class NFTParentResources {
   public readonly isTypeOf = 'NFTParentResources'
   private _pending!: boolean | undefined | null
-  private _id!: string | undefined | null
-  private _base!: string | undefined | null
-  private _parts!: (string | undefined | null)[] | undefined | null
-  private _thumb!: string | undefined | null
+  private _id!: string
+  private _base!: string
+  private _parts!: (string | undefined | null)[]
+  private _thumb!: string
 
   constructor(props?: Partial<Omit<NFTParentResources, 'toJSON'>>, json?: any) {
     Object.assign(this, props)
     if (json != null) {
       this._pending = json.pending == null ? undefined : marshal.boolean.fromJSON(json.pending)
-      this._id = json.id == null ? undefined : marshal.id.fromJSON(json.id)
-      this._base = json.base == null ? undefined : marshal.string.fromJSON(json.base)
-      this._parts = json.parts == null ? undefined : marshal.fromList(json.parts, val => val == null ? undefined : marshal.string.fromJSON(val))
-      this._thumb = json.thumb == null ? undefined : marshal.string.fromJSON(json.thumb)
+      this._id = marshal.id.fromJSON(json.id)
+      this._base = marshal.string.fromJSON(json.base)
+      this._parts = marshal.fromList(json.parts, val => val == null ? undefined : marshal.string.fromJSON(val))
+      this._thumb = marshal.string.fromJSON(json.thumb)
     }
   }
 
@@ -28,35 +28,39 @@ export class NFTParentResources {
     this._pending = value
   }
 
-  get id(): string | undefined | null {
+  get id(): string {
+    assert(this._id != null, 'uninitialized access')
     return this._id
   }
 
-  set id(value: string | undefined | null) {
+  set id(value: string) {
     this._id = value
   }
 
-  get base(): string | undefined | null {
+  get base(): string {
+    assert(this._base != null, 'uninitialized access')
     return this._base
   }
 
-  set base(value: string | undefined | null) {
+  set base(value: string) {
     this._base = value
   }
 
-  get parts(): (string | undefined | null)[] | undefined | null {
+  get parts(): (string | undefined | null)[] {
+    assert(this._parts != null, 'uninitialized access')
     return this._parts
   }
 
-  set parts(value: (string | undefined | null)[] | undefined | null) {
+  set parts(value: (string | undefined | null)[]) {
     this._parts = value
   }
 
-  get thumb(): string | undefined | null {
+  get thumb(): string {
+    assert(this._thumb != null, 'uninitialized access')
     return this._thumb
   }
 
-  set thumb(value: string | undefined | null) {
+  set thumb(value: string) {
     this._thumb = value
   }
 
@@ -66,7 +70,7 @@ export class NFTParentResources {
       pending: this.pending,
       id: this.id,
       base: this.base,
-      parts: this.parts == null ? undefined : this.parts.map((val: any) => val),
+      parts: this.parts.map((val: any) => val),
       thumb: this.thumb,
     }
   }

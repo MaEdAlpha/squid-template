@@ -1,20 +1,17 @@
 import assert from "assert"
 import * as marshal from "./marshal"
-import {NFTS} from "./nfts.model"
 
 export class NFTChildren {
   private _id!: string
   private _pending!: boolean | undefined | null
   private _equipped!: string | undefined | null
-  private _childNft!: string | undefined | null
 
   constructor(props?: Partial<Omit<NFTChildren, 'toJSON'>>, json?: any) {
     Object.assign(this, props)
     if (json != null) {
-      this._id = marshal.string.fromJSON(json.id)
+      this._id = marshal.id.fromJSON(json.id)
       this._pending = json.pending == null ? undefined : marshal.boolean.fromJSON(json.pending)
       this._equipped = json.equipped == null ? undefined : marshal.string.fromJSON(json.equipped)
-      this._childNft = json.childNft == null ? undefined : marshal.string.fromJSON(json.childNft)
     }
   }
 
@@ -43,20 +40,11 @@ export class NFTChildren {
     this._equipped = value
   }
 
-  get childNft(): string | undefined | null {
-    return this._childNft
-  }
-
-  set childNft(value: string | undefined | null) {
-    this._childNft = value
-  }
-
   toJSON(): object {
     return {
       id: this.id,
       pending: this.pending,
       equipped: this.equipped,
-      childNft: this.childNft,
     }
   }
 }

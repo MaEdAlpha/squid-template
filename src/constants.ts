@@ -1,4 +1,4 @@
-export const ISSUER = "FX1HWrb7DbVerJPCSdDMJwSh6eDpMMax7EH5pumDdtqaDQi";
+export const ISSUER = "EuMBXS9jhDmUzD7NiENWwgfBuuCqKHofy6BWuaW3hWpRsBa";
 
 export enum RMRK_COMMAND  {
     MINT ="MINT",
@@ -10,14 +10,16 @@ export enum RMRK_COMMAND  {
     DESTROY = "DESTROY",
     SETPRIORITY = "SETPRIORITY",
     BASE = "BASE",
-    CREATE = "CREATE"
+    CREATE = "CREATE",
+    BUY = "BUY",
+    LOCK = "LOCK",
 };
 
-export const ITEMS_TAG = "-WGLITMS-"; //used to find parse nft_bases from nft_items
-export const BASE_TAG = "-WGL-"; //used to find parse nft_bases from nft_items
+export const ITEMS_TAG = "-MUN1V3RS3-ITMS-"; //used to find parse nft_bases from nft_items
+export const BASE_TAG = "-MUN1V3RS3-MNSTR-"; //used to find parse nft_bases from nft_items
 
-export const COLLECTION_ITEM_TAG = "-WGLITMS";
-export const COLLECTION_BASE_TAG = "-WGL";
+export const COLLECTION_ITEM_TAG = "-MUN1V3RS3-ITMS-";
+export const COLLECTION_BASE_TAG = "-MUN1V3RS3-MNSTR-"; //need to create MU-WGL
 
 /*
 
