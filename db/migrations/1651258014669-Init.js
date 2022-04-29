@@ -1,5 +1,5 @@
-module.exports = class npx sqd db migrate1651240297145 {
-  name = 'npx sqd db migrate1651240297145'
+module.exports = class Init1651258014669 {
+  name = 'Init1651258014669'
 
   async up(db) {
     await db.query(`CREATE TABLE "remarks" ("id" character varying NOT NULL, "remarks" text, CONSTRAINT "PK_d2fb9d856201fedb9767195bb73" PRIMARY KEY ("id"))`)
