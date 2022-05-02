@@ -35,7 +35,7 @@ processor.setDataSource({
   chain: "wss://kusama-rpc.polkadot.io",
 });
 
-processor.setBlockRange({from:12452405});
+processor.setBlockRange({from:12511200});
 
 processor.addExtrinsicHandler("system.remark", processRemarks);
 processor.addExtrinsicHandler("utility.batch_all",processBatchAll);
@@ -143,7 +143,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
             nftBases.id = baseID;
             nftBases.block = ctx.block.height;
             nftBases.symbol = baseObj.symbol;
-            nftBases.issuer = baseObj.issuer;
+            nftBases.issuer = ISSUER;
             //not necessary, maybe keep for now when testing bugs
             nftBases.parts = baseObj.parts?.map(part=>{ return part!.hasOwnProperty("equippable") ? new EquippableParts(part as EquippableParts) : new FixedParts(part as FixedParts)});
             nftBases.type = "svg";
@@ -164,7 +164,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
             
             nftCollection.block = ctx.block.height;
             nftCollection.max = collectionObj.max;
-            nftCollection.issuer = collectionObj.issuer;
+            nftCollection.issuer = ISSUER;
             nftCollection.metadata = collectionObj.metadata;
             nftCollection.id = collectionObj.id;
             nftCollection.changes = collectionObj.changes ? collectionObj.changes : [];
@@ -188,7 +188,9 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
 
             const equipEntity = await getOrCreate(ctx.store, Properties, nftRecordID);
             equipEntity.royaltyInfo = JSON.stringify(nft.properties?.royaltyInfo);
-            equipEntity.itemAttributes = JSON.stringify(nft.properties!.itemAttributes);
+            equipEntity.attributes = JSON.stringify(nft.properties!.attributes);
+            equipEntity.rarity = JSON.stringify(nft.properties!.rarity);
+            equipEntity.race = JSON.stringify(nft.properties!.race);
             equipEntity.id = nftRecordID;
             equipEntity.rootowner = ISSUER;
 
@@ -234,9 +236,10 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
             const nftRecordID = `${ctx.block.height}-${nft.collection}-${nft.symbol}-${nft.sn}`;
             const nftAsset = await getOrCreate(ctx.store, NFTS, nftRecordID);
             const baseEntity = await getOrCreate(ctx.store, Properties, nftRecordID);
-            baseEntity.royaltyInfo = JSON.stringify(nft.properties!.royaltyInfo);
-            baseEntity.baseAttributes = JSON.stringify(nft.properties?.baseAttributes);
-            baseEntity.itemAttributes = JSON.stringify(nft.properties?.itemAttributes)
+            baseEntity.royaltyInfo = JSON.stringify(nft.properties?.royaltyInfo);
+            baseEntity.attributes = JSON.stringify(nft.properties!.attributes);
+            baseEntity.rarity = JSON.stringify(nft.properties!.rarity);
+            baseEntity.race = JSON.stringify(nft.properties!.race);
             baseEntity.id = nftRecordID;
             baseEntity.rootowner = ISSUER;
 
@@ -629,7 +632,7 @@ async function setItemOwnership(content1: string, newOwner: string, ctx:Extrinsi
     
     nftItem.owner! = parentRef[0]!.new!;
     nftItem.rootowner = ctx.extrinsic.signer;
-    console.log(`[PARENTisOWNER SET:] ${content1} owner = ${parentRef[0]!.new!} \n root owner: ${newOwner}`);
+    console.log(`[PARENTisOWNER SET:] ${content1} owner = ${nftItem.owner!} \n root owner: ${nftItem.rootowner}`);
     const nftResource = await getOrCreate(ctx.store, NFTResource, content1); //get item resource
   
     if(nftResource.priority[0] != undefined){

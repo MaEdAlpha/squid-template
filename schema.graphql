@@ -92,16 +92,12 @@ type NFTS @entity{
 type Properties @entity{
   id: ID!
   royaltyInfo: String! 
-  baseAttributes: String 
-  itemAttributes: String
+  attributes: String
+  rarity: String
+  race: String
   rootowner: String
 }
 
-type AttributeValue{
-  type: String!
-  value: NftAttributesValue 
-
-}
 
 type RoyaltyValue {
   type: String!
@@ -111,16 +107,6 @@ type RoyaltyValue {
 type RoyaltyInfoValue {
   royaltyPercentFloat: String! 
   reciever: String!
-}
-
-type NftAttributesValue {
-  health: String 
-  attack: String 
-  defense:  String 
-  speed:  String 
-  rarity:  String 
-  class:  String 
-  race:  String
 }
 
 type ChangeLog{

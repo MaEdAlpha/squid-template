@@ -13,10 +13,13 @@ export class Properties {
   royaltyInfo!: string
 
   @Column_("text", {nullable: true})
-  baseAttributes!: string | undefined | null
+  attributes!: string | undefined | null
 
   @Column_("text", {nullable: true})
-  itemAttributes!: string | undefined | null
+  rarity!: string | undefined | null
+
+  @Column_("text", {nullable: true})
+  race!: string | undefined | null
 
   @Column_("text", {nullable: true})
   rootowner!: string | undefined | null
