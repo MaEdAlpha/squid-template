@@ -5,7 +5,7 @@ const ormconfig = {
   // entities: [require.resolve('../lib/model')],
   entities: [],
   migrations: [__dirname + '/migrations/*.js'],
-  synchronize: false,
+  synchronize: true,
   migrationsRun: false,
   dropSchema: false,
   logging: ["query", "error", "schema"],
