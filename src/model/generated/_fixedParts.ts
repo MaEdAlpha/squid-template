@@ -3,27 +3,26 @@ import * as marshal from "./marshal"
 
 export class FixedParts {
   public readonly isTypeOf = 'FixedParts'
-  private _type!: string
+  private _type!: string | undefined | null
   private _id!: string
-  private _src!: string
+  private _src!: string | undefined | null
   private _z!: number
 
   constructor(props?: Partial<Omit<FixedParts, 'toJSON'>>, json?: any) {
     Object.assign(this, props)
     if (json != null) {
-      this._type = marshal.string.fromJSON(json.type)
+      this._type = json.type == null ? undefined : marshal.string.fromJSON(json.type)
       this._id = marshal.id.fromJSON(json.id)
-      this._src = marshal.string.fromJSON(json.src)
+      this._src = json.src == null ? undefined : marshal.string.fromJSON(json.src)
       this._z = marshal.int.fromJSON(json.z)
     }
   }
 
-  get type(): string {
-    assert(this._type != null, 'uninitialized access')
+  get type(): string | undefined | null {
     return this._type
   }
 
-  set type(value: string) {
+  set type(value: string | undefined | null) {
     this._type = value
   }
 
@@ -36,12 +35,11 @@ export class FixedParts {
     this._id = value
   }
 
-  get src(): string {
-    assert(this._src != null, 'uninitialized access')
+  get src(): string | undefined | null {
     return this._src
   }
 
-  set src(value: string) {
+  set src(value: string | undefined | null) {
     this._src = value
   }
 

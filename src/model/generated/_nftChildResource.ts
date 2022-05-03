@@ -6,6 +6,7 @@ export class NFTChildResource {
   private _pending!: boolean | undefined | null
   private _id!: string
   private _slot!: string
+  private _src!: string | undefined | null
   private _thumb!: string
 
   constructor(props?: Partial<Omit<NFTChildResource, 'toJSON'>>, json?: any) {
@@ -14,6 +15,7 @@ export class NFTChildResource {
       this._pending = json.pending == null ? undefined : marshal.boolean.fromJSON(json.pending)
       this._id = marshal.id.fromJSON(json.id)
       this._slot = marshal.string.fromJSON(json.slot)
+      this._src = json.src == null ? undefined : marshal.string.fromJSON(json.src)
       this._thumb = marshal.string.fromJSON(json.thumb)
     }
   }
@@ -44,6 +46,14 @@ export class NFTChildResource {
     this._slot = value
   }
 
+  get src(): string | undefined | null {
+    return this._src
+  }
+
+  set src(value: string | undefined | null) {
+    this._src = value
+  }
+
   get thumb(): string {
     assert(this._thumb != null, 'uninitialized access')
     return this._thumb
@@ -59,6 +69,7 @@ export class NFTChildResource {
       pending: this.pending,
       id: this.id,
       slot: this.slot,
+      src: this.src,
       thumb: this.thumb,
     }
   }

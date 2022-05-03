@@ -23,15 +23,15 @@ type Base @entity{
     id: ID!
     block: Int! 
     symbol: String!
-    type: String!
+    type: String
     issuer: String!
     parts: [BaseParts]!
 }
 
 type FixedParts {
-    type: String!
+    type: String
     id: ID!
-    src: String!
+    src: String
     z: Int!
 }
 
@@ -67,6 +67,7 @@ type NFTChildResource{
   pending: Boolean
   id: ID!
   slot: String!
+  src: String
   thumb: String!
 }
 
@@ -100,7 +101,7 @@ type Properties @entity{
 
 
 type RoyaltyValue {
-  type: String!
+  type: String
   value: RoyaltyInfoValue! 
 }
 

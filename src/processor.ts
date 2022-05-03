@@ -35,7 +35,7 @@ processor.setDataSource({
   chain: "wss://kusama-rpc.polkadot.io",
 });
 
-processor.setBlockRange({from:12511200});
+processor.setBlockRange({from:12519700});
 
 processor.addExtrinsicHandler("system.remark", processRemarks);
 processor.addExtrinsicHandler("utility.batch_all",processBatchAll);
@@ -125,7 +125,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
     return;
   } else {
 
-    if(rmrk.includes(BASE_TAG) || rmrk.includes(ITEMS_TAG)){
+    if(rmrk.includes(BASE_TAG) || rmrk.includes(ITEMS_TAG) && rmrk.includes('RESADD')){
       console.log(rmrk);
     }
 
@@ -133,6 +133,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
       case RMRK_COMMAND.BASE:
         if(ctx.extrinsic.signer === ISSUER){ 
           const baseObj = await getBaseRMRK(content1);
+          // console.log(baseObj);
             const baseID = 'base-'+ baseObj.symbol;
             const nftBases = await getOrCreate(ctx.store, Base, baseID);
             // console.log("Block height: ", ctx.block.height);
@@ -147,7 +148,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
             //not necessary, maybe keep for now when testing bugs
             nftBases.parts = baseObj.parts?.map(part=>{ return part!.hasOwnProperty("equippable") ? new EquippableParts(part as EquippableParts) : new FixedParts(part as FixedParts)});
             nftBases.type = "svg";
-            console.log(nftBases);
+            // console.log(nftBases.parts)
             await ctx.store.save(nftBases);
           
         }
@@ -169,7 +170,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
             nftCollection.id = collectionObj.id;
             nftCollection.changes = collectionObj.changes ? collectionObj.changes : [];
             nftCollection.symbol = collectionObj.symbol;
-            console.log(`wrote Collection: ${nftCollection.id}`)
+            // console.log(`wrote Collection: ${nftCollection.id}`)
             await ctx.store.save(nftCollection);
           }
         }
@@ -195,8 +196,8 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
             equipEntity.rootowner = ISSUER;
 
             await ctx.store.save(equipEntity).then((result)=>{
-              console.log('saving equipEntity');
-              console.log(result);
+              console.log('PROPERTIES UPDATED');
+              // console.log(result);
             }).catch((e)=>{
               console.log(e);
             });
@@ -219,11 +220,11 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
 
 
             await ctx.store.save(nftAsset).then(()=>{
-              console.log("childNFT save Successful!");
-              console.log(nftAsset);
+              console.log("ChildNFT SAVED");
+              //console.log(nftAsset);
             }).catch((e)=>{
               console.log('NFT SaveError: ', e);
-              console.log(nftRecordID)
+              //console.log(nftRecordID)
             });
           } 
 
@@ -231,6 +232,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
 
           const nft = JSON.parse(decodeURIComponent(content1)); //can set your own type for this.
           const parentNFT = nft.collection.includes(COLLECTION_BASE_TAG);
+          console.log(nft);
 
           if(parentNFT){  //change collection to MUN1V3RS31TMS
             const nftRecordID = `${ctx.block.height}-${nft.collection}-${nft.symbol}-${nft.sn}`;
@@ -246,7 +248,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
 
             await ctx.store.save(baseEntity).then((result)=>{
               console.log('[SUCCESS] BASE ENTITY');
-              console.log(baseEntity);
+             // console.log(baseEntity);
             }).catch((e)=>{
               console.log("[ERROR] BASE ENTITY")
               console.log(e);
@@ -268,14 +270,11 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
             nftAsset.id = nftRecordID;
             nftAsset.changes = [];
             nftAsset.children = [];
-            console.log(nftAsset);
-            console.log("About to fail 1");
-            await createParentResource(nftRecordID, nft.sn, nft.metadata, nft.collection, ctx);
-            console.log(("About to fail 2"));
             
             await ctx.store.save(nftAsset).then(()=>{
               console.log("[SUCCESS] baseNFT save Successful!");
-              console.log(content1);
+              console.log(nftAsset);
+
             }).catch((e)=>{
               console.log('[ERROR]: baseNFT ', e);
               // console.log(baseProperty);  
@@ -288,31 +287,51 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
         break;
 
       case RMRK_COMMAND.RESADD:
-
-        if(content2){
-          const resource = rmrk.includes("MUN1V3RS3-ITMS") ? 
-          await NFTChildResourcesAddRMRK(content2)
-          :
-          rmrk.includes("MUN1V3RS3-MNSTR") ?
-          await NFTParentResourcesAddRMRK(content2)
-          :
-          undefined;
-
-          if (resource === undefined){ break;}
-
+        //BADGERBROS
+        if(content1.includes("MUN1V3RS3")){
+          console.log('RESADD')
+          console.log(content1);
+          let childResource = content1.includes(ITEMS_TAG) ? await NFTChildResourcesAddRMRK(content2) : false; // if  rmrk.includes("MUN1V3RS3-ITMS") ? 
+          let parentResource = content1.includes(COLLECTION_BASE_TAG) && !content1.includes(ITEMS_TAG)? await NFTParentResourcesAddRMRK(content2) : false; // rmrk.includes("-MUN1V3RS3-MNSTR-") ?
+         
           const resourceID = content1;
           
-          if(resourceID.includes(BASE_TAG) || resourceID.includes(ITEMS_TAG)){
-        
-            if(resourceID.includes(BASE_TAG)){
-              console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-              console.log("RESOURCE ADDED FOR BASE NFT!?!!!!!!")
+            if(parentResource){
+              console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+              console.log("RESOURCE ADDED FOR BASE NFT!?!!!!!!");
+              console.log(content1);
+              console.log(parentResource);
 
-              break;       
-            }else if( resourceID.includes(ITEMS_TAG)){
               //append to correct nft
               const addResourceToNFT = await getOrCreate(ctx.store, NFTResource, resourceID);
-              const childRes = new NFTChildResource(resource as unknown as NFTChildResource);
+              const parentRes = new NFTParentResources(parentResource as unknown as NFTParentResources);
+              parentRes.pending = false;
+              const newArray = addResourceToNFT.resources !== undefined ? [parentRes] : [parentRes];
+              // newArray.forEach(item=> console.log(`Resource Print: ${item}`));
+              addResourceToNFT.resources = newArray.flat();
+              addResourceToNFT.priority = [parentRes.id];
+              addResourceToNFT.rootowner = ISSUER;
+
+              console.log('-------Resource to add for PARENT--------');
+              console.log(resourceID);
+              console.log(parentRes);
+              console.log("--------Updated PARENT resource---------");
+              console.log(addResourceToNFT);
+              console.log("--------------------------------");
+              // const updatedArray: NFTChildResource[] = (addResourceToNFT.resources);
+              // updatedArray
+              await ctx.store.save(addResourceToNFT).then(()=>{
+                // console.log(`AddedRes to item: ${resourceID} Successful!`);
+              }).catch((e)=>{
+                console.log(`Item: ${resourceID} SaveError: `, e);
+                console.log()
+              }); 
+              console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+              break;       
+            }else if(childResource !== undefined){
+              //append to correct nft
+              const addResourceToNFT = await getOrCreate(ctx.store, NFTResource, resourceID);
+              const childRes = new NFTChildResource(childResource as unknown as NFTChildResource);
               childRes.pending = false;
               const newArray = addResourceToNFT.resources !== undefined ? [addResourceToNFT.resources.flat(), childRes] : [childRes];
               // newArray.forEach(item=> console.log(`Resource Print: ${item}`));
@@ -322,7 +341,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
 
               console.log('-------Resource to add--------');
               console.log(resourceID);
-              console.log(resource);
+              console.log(childResource);
               console.log("--------Updated ITEM resource---------");
               console.log(addResourceToNFT);
               console.log("--------------------------------");
@@ -335,8 +354,10 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
                 console.log()
               }); 
               break;
+            }else {
+              break;
             }
-          } 
+
         }
         break;
 
@@ -455,145 +476,145 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
 
         break;
 
-      case RMRK_COMMAND.EQUIP:
+      // case RMRK_COMMAND.EQUIP:
 
-        if(content1.includes(ITEMS_TAG) && content2 === ''){
-          //Unequip item to EOA.
-          console.log(`UNEQUIP ${content1} back to: `, ctx.extrinsic.signer);
-          await setItemOwnership(content1, ctx.extrinsic.signer, ctx, false); 
+      //   if(content1.includes(ITEMS_TAG) && content2 === ''){
+      //     //Unequip item to EOA.
+      //     console.log(`UNEQUIP ${content1} back to: `, ctx.extrinsic.signer);
+      //     await setItemOwnership(content1, ctx.extrinsic.signer, ctx, false); 
           
-          //Remove from children[] of parentNFT
-          const nftChild = await getOrCreate(ctx.store, NFTS, content1);
+      //     //Remove from children[] of parentNFT
+      //     const nftChild = await getOrCreate(ctx.store, NFTS, content1);
           
-          let oldOwner = nftChild!.changes![0]!.old!; // owner's address
-          let newOwner = nftChild!.changes![0]!.new; //saved parentNFT address
+      //     let oldOwner = nftChild!.changes![0]!.old!; // owner's address
+      //     let newOwner = nftChild!.changes![0]!.new; //saved parentNFT address
 
-          const nftParent = await getOrCreate(ctx.store, NFTS, newOwner!);
+      //     const nftParent = await getOrCreate(ctx.store, NFTS, newOwner!);
 
-          const nftParentChildren = nftParent.children!;
-          const newFilteredArray = nftParentChildren.filter( (child) => {
-             return child!.id !== content1;
-          }); 
+      //     const nftParentChildren = nftParent.children!;
+      //     const newFilteredArray = nftParentChildren.filter( (child) => {
+      //        return child!.id !== content1;
+      //     }); 
           
-          nftParent.children = [...newFilteredArray!];
-          console.log(`ParentNFT lookup new: ${newOwner} old: ${oldOwner}`);
-          await ctx.store.save(nftParent).then(()=>{
-            console.log("[SUCCESS] item removed, new array.");
-            console.log(newFilteredArray);
-            console.log(`${content1} vs ${nftParent.children}`);
-          }).catch((e)=>{
-            console.log("ERR removing child");
-            console.log(newFilteredArray);
+      //     nftParent.children = [...newFilteredArray!];
+      //     console.log(`ParentNFT lookup new: ${newOwner} old: ${oldOwner}`);
+      //     await ctx.store.save(nftParent).then(()=>{
+      //       console.log("[SUCCESS] item removed, new array.");
+      //       console.log(newFilteredArray);
+      //       console.log(`${content1} vs ${nftParent.children}`);
+      //     }).catch((e)=>{
+      //       console.log("ERR removing child");
+      //       console.log(newFilteredArray);
             
-          });
-          // filter array to exclude content1
-          // save new parentNFT children[]
-          // store in db
-        }
-        if(content1.includes(ITEMS_TAG) && content2.includes(COLLECTION_BASE_TAG)){
-            //Assign item to parentNFT children[]
-            let item = await getItemResource(content1, ctx);
-            const nftChild = await getOrCreate(ctx.store, NFTS, content1);
-            let changeLog = nftChild.changes!;
-            let parentID = changeLog[0]?.new!;
-            // console.log('xxxXXXxitemResourcexxxXXx')
-            // console.log(item.resource);
-            // console.log('xxxxxxNFTCHILD...Check')
-            // console.log(nftChild);
-            //add item resource to parent.children[itemResources]
-            const nftParent = await getOrCreate(ctx.store, NFTS, parentID); //get parent for children[]
-            const newArray = nftParent.children !== [] ? [...nftParent.children!, item.resource] : [item.resource];
-            nftParent.children = newArray;
-            console.log("NFT PARENT CHILDREN ARRAY");
-            console.log(nftParent.children);
-            // console.log('NEW ARRAY');
-            // console.log(newArray);
-            await setItemOwnership(content1, nftParent.id, ctx, true);
+      //     });
+      //     // filter array to exclude content1
+      //     // save new parentNFT children[]
+      //     // store in db
+      //   }
+      //   if(content1.includes(ITEMS_TAG) && content2.includes(COLLECTION_BASE_TAG)){
+      //       //Assign item to parentNFT children[]
+      //       let item = await getItemResource(content1, ctx);
+      //       const nftChild = await getOrCreate(ctx.store, NFTS, content1);
+      //       let changeLog = nftChild.changes!;
+      //       let parentID = changeLog[0]?.new!;
+      //       // console.log('xxxXXXxitemResourcexxxXXx')
+      //       // console.log(item.resource);
+      //       // console.log('xxxxxxNFTCHILD...Check')
+      //       // console.log(nftChild);
+      //       //add item resource to parent.children[itemResources]
+      //       const nftParent = await getOrCreate(ctx.store, NFTS, parentID); //get parent for children[]
+      //       const newArray = nftParent.children !== [] ? [...nftParent.children!, item.resource] : [item.resource];
+      //       nftParent.children = newArray;
+      //       console.log("NFT PARENT CHILDREN ARRAY");
+      //       console.log(nftParent.children);
+      //       // console.log('NEW ARRAY');
+      //       // console.log(newArray);
+      //       await setItemOwnership(content1, nftParent.id, ctx, true);
 
-            await ctx.store.save(nftParent).then(()=>{
-              console.log('[SUCCESS] Child added to ParentNFT!');
+      //       await ctx.store.save(nftParent).then(()=>{
+      //         console.log('[SUCCESS] Child added to ParentNFT!');
               
-            }).catch((e)=>{
-              console.log("[FAIL] Child not added to ParnetNFT",e)
-            });
+      //       }).catch((e)=>{
+      //         console.log("[FAIL] Child not added to ParnetNFT",e)
+      //       });
 
-        }
-        break;
+      //   }
+      //   break;
 
-      case RMRK_COMMAND.DESTROY:
-        if(content1.includes(BASE_TAG) || content1.includes(ITEMS_TAG)){
-          console.log('DESTROY => ' , rmrk);
-          //TODO  DESTROY items and delist owner
-        }
-        break;
+      // case RMRK_COMMAND.DESTROY:
+      //   if(content1.includes(BASE_TAG) || content1.includes(ITEMS_TAG)){
+      //     console.log('DESTROY => ' , rmrk);
+      //     //TODO  DESTROY items and delist owner
+      //   }
+      //   break;
 
-      case RMRK_COMMAND.LIST:
-        // change nft property
-        break;
-      case RMRK_COMMAND.BUY:
-        // change nft property
-        // assign owner to NFT. Along with all Children items. 
-        if(content1.includes(BASE_TAG)){
+      // case RMRK_COMMAND.LIST:
+      //   // change nft property
+      //   break;
+      // case RMRK_COMMAND.BUY:
+      //   // change nft property
+      //   // assign owner to NFT. Along with all Children items. 
+      //   if(content1.includes(BASE_TAG)){
 
-          const nftBase = await getOrCreate(ctx.store, NFTS, content1);
-          nftBase.owner = ctx.extrinsic.signer;
-          nftBase.rootowner = ctx.extrinsic.signer;
+      //     const nftBase = await getOrCreate(ctx.store, NFTS, content1);
+      //     nftBase.owner = ctx.extrinsic.signer;
+      //     nftBase.rootowner = ctx.extrinsic.signer;
 
-          await ctx.store.save(nftBase).then(()=>{
-            console.log("New Owner for base!");
-          });
+      //     await ctx.store.save(nftBase).then(()=>{
+      //       console.log("New Owner for base!");
+      //     });
 
-          await setPropertyRootOwner(ctx, content1, ctx.extrinsic.signer);
-          await setResourceRootOwner(ctx, content1, ctx.extrinsic.signer);
-          //TODO map undefined error handle.
-          if(nftBase.children!.length > 0){
-            for await (const childResource of nftBase.children!){
-              await setItemRootOwnershipOnly(childResource!.id, ctx.extrinsic.signer, ctx );
-              await setPropertyRootOwner(ctx, childResource!.id, ctx.extrinsic.signer);
-              await setResourceRootOwner(ctx, childResource!.id, ctx.extrinsic.signer);
-            };
-          }
+      //     await setPropertyRootOwner(ctx, content1, ctx.extrinsic.signer);
+      //     await setResourceRootOwner(ctx, content1, ctx.extrinsic.signer);
+      //     //TODO map undefined error handle.
+      //     if(nftBase.children!.length > 0){
+      //       for await (const childResource of nftBase.children!){
+      //         await setItemRootOwnershipOnly(childResource!.id, ctx.extrinsic.signer, ctx );
+      //         await setPropertyRootOwner(ctx, childResource!.id, ctx.extrinsic.signer);
+      //         await setResourceRootOwner(ctx, childResource!.id, ctx.extrinsic.signer);
+      //       };
+      //     }
 
-        } else if(content1.includes(ITEMS_TAG)){
-          const nftItem = await getOrCreate(ctx.store, NFTS, content1);
-          nftItem.owner = ctx.extrinsic.signer;
-          nftItem.rootowner = ctx.extrinsic.signer;
+      //   } else if(content1.includes(ITEMS_TAG)){
+      //     const nftItem = await getOrCreate(ctx.store, NFTS, content1);
+      //     nftItem.owner = ctx.extrinsic.signer;
+      //     nftItem.rootowner = ctx.extrinsic.signer;
 
-          await ctx.store.save(nftItem).then(()=>{
-            console.log("New Owner for Item saved!");
-          });
+      //     await ctx.store.save(nftItem).then(()=>{
+      //       console.log("New Owner for Item saved!");
+      //     });
 
-          const possibleParentNftID = nftItem.changes![0]!.new!;
+      //     const possibleParentNftID = nftItem.changes![0]!.new!;
 
-          if(possibleParentNftID!.includes(BASE_TAG)){
-            await removeItemFromParent(possibleParentNftID, content1, ctx);
-          }
+      //     if(possibleParentNftID!.includes(BASE_TAG)){
+      //       await removeItemFromParent(possibleParentNftID, content1, ctx);
+      //     }
 
-          await setPropertyRootOwner(ctx, content1, ctx.extrinsic.signer);
-          await setResourceRootOwner(ctx, content1, ctx.extrinsic.signer);
+      //     await setPropertyRootOwner(ctx, content1, ctx.extrinsic.signer);
+      //     await setResourceRootOwner(ctx, content1, ctx.extrinsic.signer);
 
-        }
-        break;
-      case "CHANGEISSUER":
-        //not sure what this does yet
-        break;
-      case "EMOTE":
-        //not sure what this does yet
-        break;
-      case "ACCEPT":
-        //not sure what this does yet
-       break;
-      case "EQUIPPABLE":
-        //not sure what this does yet
-       break;
+      //   }
+      //   break;
+      // case "CHANGEISSUER":
+      //   //not sure what this does yet
+      //   break;
+      // case "EMOTE":
+      //   //not sure what this does yet
+      //   break;
+      // case "ACCEPT":
+      //   //not sure what this does yet
+      //  break;
+      // case "EQUIPPABLE":
+      //   //not sure what this does yet
+      //  break;
       case "BURN":
         if(content1.includes(BASE_TAG) || content1.includes(ITEMS_TAG)){
-          console.log('BURN => ' , rmrk);
+          // console.log('BURN => ' , rmrk);
           //TODO  BURN items and delist owner
         }
         break;
       default:
-        console.debug('No function for: ', command);
+        // console.debug('No function for: ', command);
         break;
     }
   }
@@ -694,11 +715,6 @@ async function getItemResource(itemId: string, ctx: ExtrinsicHandlerContext): Pr
     return result;
 }
 
-async function setItemResource(itemId:string, ctx: ExtrinsicHandlerContext){
-  const nftResource = await getOrCreate(ctx.store, NFTResource, itemId);
-
-}
-
 async function setPropertyRootOwner(ctx: ExtrinsicHandlerContext, id:string, newRootOwner:string){
   const baseProperties = await getOrCreate(ctx.store, Properties, id);
   baseProperties.rootowner = newRootOwner;
@@ -725,62 +741,6 @@ async function setResourceRootOwner(ctx: ExtrinsicHandlerContext, id:string, new
   });
 }
 
-async function createParentResource(resourceID:string, sn:string, metadata:string, symbol: string, ctx: ExtrinsicHandlerContext){
-  //need to dynamically find base resources.
-  const addResourceToNFT = await getOrCreate(ctx.store, NFTResource, resourceID);
-  //IMPORRTANT COLLECTION BASE TAG should also be what BASE records store as ID wise.
-  const baseID = 'base'+ symbol.slice(18);
-  
-  const baseData = await getOrCreate(ctx.store, Base, baseID);
-  
-  const partsArray = baseData.parts;
-  console.log(baseData);
-  //Creates a new array of parts to append to parentNFT. Needs to be of 8 variations.
-
-  const resourceArray = partsArray.map( (part) => {
-
-    if((+sn % 8) !== 0 && part!.id.includes((+sn % 8).toString())){
-      return part!.id;
-    }
-    
-    if((+sn % 8) === 0 && part!.id.includes('8')){ //CHANGE
-      return part!.id;
-    }
-
-    if(part!.isTypeOf === 'EquippableParts')
-    {
-
-      return part!.id;
-    }
-  }).filter((el) => el !== undefined);
-
-  console.log(resourceArray);
-
-  let resource = {
-    pending: false,
-    id: resourceID,
-    base: baseID, //CHANGE
-    parts: resourceArray,
-    thumb: metadata
-  }  
-
-  const parentResource = new NFTParentResources(resource as unknown as NFTParentResources);
-
-  let uniqueId = Math.random().toString(36).slice(2);
-  addResourceToNFT.priority = [uniqueId];
-  addResourceToNFT.rootowner = ISSUER;
-  addResourceToNFT.resources = [parentResource];
-  
-
-  await ctx.store.save(addResourceToNFT).then(()=>{
-    console.log(`[SUCCESS_PARENT_RESOURCE] `);
-    console.log(addResourceToNFT);
-  }).catch((e)=>{
-    console.log(`BASE ${resourceID} SaveError: `, e);
-    console.log(addResourceToNFT);
-  });  
-}
-
 async function removeItemFromParent(parentID:string , itemID:string, ctx: ExtrinsicHandlerContext){
   const parentNFT = await getOrCreate(ctx.store, NFTS, parentID);
 
@@ -792,22 +752,6 @@ async function removeItemFromParent(parentID:string , itemID:string, ctx: Extrin
   }).catch((e)=>{
     console.log(`[FILTERED_ITEM_FAIL]: `,e);
   })
-}
-
-function validateSigner(rootOwner:string, signerAddr:string):boolean{
-  return signerAddr === rootOwner;
-}
-
-function stringifyArray(list: any[]): any[] {
-  let listStr : any[] = [];
-  list = list[0]
-  for (let vec of list){
-    for (let i = 0; i < vec.length; i++){
-      vec[i] = String(vec[i]);
-    }
-    listStr.push(vec);
-  }
-  return listStr
 }
 
 type EntityConstructor<T> = {

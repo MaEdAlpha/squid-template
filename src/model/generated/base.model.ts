@@ -17,8 +17,8 @@ export class Base {
   @Column_("text", {nullable: false})
   symbol!: string
 
-  @Column_("text", {nullable: false})
-  type!: string
+  @Column_("text", {nullable: true})
+  type!: string | undefined | null
 
   @Column_("text", {nullable: false})
   issuer!: string
