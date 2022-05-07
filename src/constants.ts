@@ -1,4 +1,4 @@
-export const ISSUER = "H43iEn4n57Zvnm8PwdLVKmbz3VF6rqBSeX4bN2mHnNLKunV";
+export const ISSUER = "DUo6kCiz2z2jAkyDtRMDR6ZfZPuG2HS12q8fL73BNi1neVt";
 
 export enum RMRK_COMMAND  {
     MINT ="MINT",

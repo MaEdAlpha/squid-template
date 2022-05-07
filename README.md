@@ -306,35 +306,3 @@ More details will be added later.
 ## Disclaimer
 
 This is alpha-quality software. Expect some bugs and incompatible changes in coming weeks.
-
-
-
-<!-- """
-RMRK::LIST::2.0.0::12202817-822d96c78d0d8a3e72-WGL-wegland_1-00000001::905000000
-RMRK::BUY::2.0.0::12202817-822d96c78d0d8a3e72-WGL-wegland_1-00000001
-New Owner for base!
-[SUCCESS]: Property_ROOTOWNER_CHANGE 12202817-822d96c78d0d8a3e72-WGL-wegland_1-00000001
-Resource update error:  TypeError: Cannot read properties of undefined (reading 'map')
-    at Object.to (/home/ksm-node/Github/squid-template/lib/model/generated/nftResource.model.js:49:68)
-    at Function.ApplyValueTransformers.transformTo (/home/ksm-node/Github/squid-template/node_modules/typeorm/util/ApplyValueTransformers.js:22:28)
-    at PostgresDriver.preparePersistentValue (/home/ksm-node/Github/squid-template/node_modules/typeorm/driver/postgres/PostgresDriver.js:517:69)
-    at /home/ksm-node/Github/squid-template/node_modules/typeorm/query-builder/InsertQueryBuilder.js:454:57
-    at Array.forEach (<anonymous>)
-    at /home/ksm-node/Github/squid-template/node_modules/typeorm/query-builder/InsertQueryBuilder.js:432:25
-    at Array.forEach (<anonymous>)
-    at InsertQueryBuilder.createValuesExpression (/home/ksm-node/Github/squid-template/node_modules/typeorm/query-builder/InsertQueryBuilder.js:431:23)
-    at InsertQueryBuilder.createInsertExpression (/home/ksm-node/Github/squid-template/node_modules/typeorm/query-builder/InsertQueryBuilder.js:265:37)
-    at InsertQueryBuilder.getQuery (/home/ksm-node/Github/squid-template/node_modules/typeorm/query-builder/InsertQueryBuilder.js:38:21)
-Attempting to set ownership for 12202840-822d96c78d0d8a3e72-WGLITMS-wegland_background-00000005 to DDkDn4CDsdK1eaSc6iUgByFaT7rw8jP1wG58zZdeEKmKWyg
-Attempting to set ownership for 12202840-822d96c78d0d8a3e72-WGLITMS-wegland_helmet-00000001 to DDkDn4CDsdK1eaSc6iUgByFaT7rw8jP1wG58zZdeEKmKWyg
-[NEW BUY: OWNERSHIP_TRNSFR_SUCCESS]!
-[SUCCESS]: Property_ROOTOWNER_CHANGE 12202840-822d96c78d0d8a3e72-WGLITMS-wegland_background-00000005
-[SUCCESS]: Resource_ROOTOWNER_CHANGE 12202840-822d96c78d0d8a3e72-WGLITMS-wegland_background-00000005
-[NEW BUY: OWNERSHIP_TRNSFR_SUCCESS]!
-[SUCCESS]: Property_ROOTOWNER_CHANGE 12202840-822d96c78d0d8a3e72-WGLITMS-wegland_helmet-00000001
-[SUCCESS]: Resource_ROOTOWNER_CHANGE 12202840-822d96c78d0d8a3e72-WGLITMS-wegland_helmet-00000001
-
-
-
-
-""" -->

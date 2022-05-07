@@ -35,7 +35,7 @@ processor.setDataSource({
   chain: "wss://kusama-rpc.polkadot.io",
 });
 
-processor.setBlockRange({from:12519700});
+processor.setBlockRange({from:12574675});
 
 processor.addExtrinsicHandler("system.remark", processRemarks);
 processor.addExtrinsicHandler("utility.batch_all",processBatchAll);
