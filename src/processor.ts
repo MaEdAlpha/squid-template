@@ -182,7 +182,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
           const nft = JSON.parse(decodeURIComponent(content1));
           const childNFT = nft.collection.includes(COLLECTION_ITEM_TAG);
 
-          if(childNFT){  //change collection to MUN1V3RS31TMS
+          if(childNFT && ctx.block.height >= 12575447 ){  //change collection to MUN1V3RS31TMS
             //I am equippable  
             const nftRecordID = `${ctx.block.height}-${nft.collection}-${nft.symbol}-${nft.sn}`;
             const nftAsset:NFTS = await getOrCreate(ctx.store, NFTS, nftRecordID);
@@ -228,7 +228,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
             });
           } 
 
-        }else if(rmrk.includes(BASE_TAG)){
+        }else if(rmrk.includes(BASE_TAG)  && ctx.block.height >= 12575447){
 
           const nft = JSON.parse(decodeURIComponent(content1)); //can set your own type for this.
           const parentNFT = nft.collection.includes(COLLECTION_BASE_TAG);
@@ -288,7 +288,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
 
       case RMRK_COMMAND.RESADD:
         //BADGERBROS
-        if(content1.includes("MUN1V3RS3")){
+        if(content1.includes("MUN1V3RS3") && ctx.block.height >= 12575447){
           console.log('RESADD')
           console.log(content1);
           let childResource = content1.includes(ITEMS_TAG) ? await NFTChildResourcesAddRMRK(content2) : false; // if  rmrk.includes("MUN1V3RS3-ITMS") ? 
@@ -328,7 +328,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
               }); 
               console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
               break;       
-            }else if(childResource !== undefined){
+            }else if(childResource !== undefined  && ctx.block.height >= 12575447){
               //append to correct nft
               const addResourceToNFT = await getOrCreate(ctx.store, NFTResource, resourceID);
               const childRes = new NFTChildResource(childResource as unknown as NFTChildResource);
@@ -363,7 +363,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
 
       case RMRK_COMMAND.SETPRIORITY:
        //Append resources to NFT
-       if(content1.includes(ITEMS_TAG) || content1.includes(BASE_TAG)){
+       if(content1.includes(ITEMS_TAG) || content1.includes(BASE_TAG)  && ctx.block.height >= 12575447){
         //  console.log(content1);
         //  console.log(content2);
         const addPriorityToResource = await getOrCreate(ctx.store, NFTResource, content1);
@@ -397,7 +397,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
        // SEND is used to append childNFT to parentNFT. 
         const signerAddr = ctx.extrinsic.signer;
 
-        if(content1.includes(COLLECTION_ITEM_TAG) && content2.includes(COLLECTION_BASE_TAG)){
+        if(content1.includes(COLLECTION_ITEM_TAG) && content2.includes(COLLECTION_BASE_TAG)  && ctx.block.height >= 12575447){
           //Sending an item to parent. assign ownership to parent. update changelog
           //content1 = child item id
           //content2 = parent item id
@@ -419,7 +419,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
 
         }
 
-        else if((content1.includes(COLLECTION_BASE_TAG) ) && (!content2.includes(COLLECTION_ITEM_TAG) && !content2.includes(COLLECTION_BASE_TAG)) && content2 ){
+        else if((content1.includes(COLLECTION_BASE_TAG) ) && (!content2.includes(COLLECTION_ITEM_TAG) && !content2.includes(COLLECTION_BASE_TAG)) && content2  && ctx.block.height >= 12575447){
           //User sends nested NFT you change owner of both base and children
           //get NFTS with content1 address 
           const nftBase = await getOrCreate(ctx.store, NFTS, content1);
@@ -478,7 +478,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
 
       case RMRK_COMMAND.EQUIP:
 
-        if(content1.includes(ITEMS_TAG) && content2 === ''){
+        if(content1.includes(ITEMS_TAG) && content2 === ''  && ctx.block.height >= 12575447){
           //Unequip item to EOA.
           console.log(`UNEQUIP ${content1} back to: `, ctx.extrinsic.signer);
           await setItemOwnership(content1, ctx.extrinsic.signer, ctx, false); 
@@ -511,7 +511,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
           // save new parentNFT children[]
           // store in db
         }
-        if(content1.includes(ITEMS_TAG) && content2.includes(COLLECTION_BASE_TAG)){
+        if(content1.includes(ITEMS_TAG) && content2.includes(COLLECTION_BASE_TAG)  && ctx.block.height >= 12575447){
             //Assign item to parentNFT children[]
             let item = await getItemResource(content1, ctx);
             const nftChild = await getOrCreate(ctx.store, NFTS, content1);
@@ -609,7 +609,29 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
        break;
       case "BURN":
         if(content1.includes(BASE_TAG) || content1.includes(ITEMS_TAG)){
-          // console.log('BURN => ' , rmrk);
+          console.log('BURN => ' , rmrk);
+
+          const nftBase = await getOrCreate(ctx.store, NFTS, content1);
+          nftBase.owner = 'BURNED'; // set only for parent. childNfts.owner could be parentNfts
+          nftBase.rootowner = 'BURNED'; //actual EOA of nft ownership
+
+          await ctx.store.save(nftBase).then(()=>{
+            console.log(`Send ${content1} to 'BURNED' successful`);
+          }).catch((e)=>{
+            console.log('Send ERROR: ', e);
+          });
+
+
+          //If ParentNFT Check if it has children. If it does. burn those items as well
+          if(nftBase.children!.length > 0){
+
+            for await (const childResource of nftBase.children!){
+             console.log(`Sending ${childResource!.id} to ${'BURNED'} `);
+             await setItemRootOwnershipOnly(childResource!.id, 'BURNED', ctx);
+             await setPropertyRootOwner(ctx, childResource!.id, 'BURNED');
+             await setResourceRootOwner(ctx, childResource!.id, 'BURNED');
+           }
+          }
           //TODO  BURN items and delist owner
         }
         break;
