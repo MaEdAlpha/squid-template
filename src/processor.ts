@@ -150,7 +150,6 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
             nftBases.type = "svg";
             // console.log(nftBases.parts)
             await ctx.store.save(nftBases);
-          
         }
         
         break;
@@ -178,7 +177,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
 
       case RMRK_COMMAND.MINT:
         //Mint multiple cases now
-        if(rmrk.includes(ITEMS_TAG)){
+        if(rmrk.includes(ITEMS_TAG) && ctx.block.height >= 12575447){ 
           const nft = JSON.parse(decodeURIComponent(content1));
           const childNFT = nft.collection.includes(COLLECTION_ITEM_TAG);
 
@@ -554,7 +553,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
       case RMRK_COMMAND.BUY:
         // change nft property
         // assign owner to NFT. Along with all Children items. 
-        if(content1.includes(BASE_TAG)){
+        if(content1.includes(BASE_TAG) && ctx.block.height >= 12575447){
 
           const nftBase = await getOrCreate(ctx.store, NFTS, content1);
           nftBase.owner = ctx.extrinsic.signer;
@@ -575,7 +574,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
             };
           }
 
-        } else if(content1.includes(ITEMS_TAG)){
+        } else if(content1.includes(ITEMS_TAG) && ctx.block.height >= 12575447){
           const nftItem = await getOrCreate(ctx.store, NFTS, content1);
           nftItem.owner = ctx.extrinsic.signer;
           nftItem.rootowner = ctx.extrinsic.signer;
@@ -608,7 +607,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
         //not sure what this does yet
        break;
       case "BURN":
-        if(content1.includes(BASE_TAG) || content1.includes(ITEMS_TAG)){
+        if(ctx.block.height >= 12575447 && (content1.includes(BASE_TAG) || content1.includes(ITEMS_TAG))){
           console.log('BURN => ' , rmrk);
 
           const nftBase = await getOrCreate(ctx.store, NFTS, content1);
