@@ -38,7 +38,7 @@ processor.setDataSource({
 processor.setBlockRange({from:12574675});
 
 processor.addExtrinsicHandler("system.remark", processRemarks);
-processor.addExtrinsicHandler("utility.batch_all",processBatchAll);
+processor.addExtrinsicHandler("utility.batch_all", processBatchAll);
 
 processor.run();
 
@@ -51,7 +51,7 @@ async function processRemarks(ctx: ExtrinsicHandlerContext): Promise<void> {
   
     const remark =  await getOrCreate(ctx.store, Remarks, ctx.extrinsic.id.toString());
     remark.remarks = remarksData.toString();
-    await ctx.store.save(remark);
+    //await ctx.store.save(remark);
 
     await parseRMRKData(remarksData.toString(), ctx); //send data in to save to db.
 
@@ -583,10 +583,12 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
             console.log("New Owner for Item saved!");
           });
 
-          const possibleParentNftID = nftItem.changes![0]!.new!;
-
-          if(possibleParentNftID!.includes(BASE_TAG)){
-            await removeItemFromParent(possibleParentNftID, content1, ctx);
+          if(nftItem.changes![0] !== undefined){
+            const possibleParentNftID = nftItem.changes![0]?.new!;
+  
+            if(possibleParentNftID!.includes(BASE_TAG)){
+              await removeItemFromParent(possibleParentNftID, content1, ctx);
+            }
           }
 
           await setPropertyRootOwner(ctx, content1, ctx.extrinsic.signer);
@@ -607,7 +609,7 @@ async function parseRMRKData(rmrk:string, ctx: ExtrinsicHandlerContext): Promise
         //not sure what this does yet
        break;
       case "BURN":
-        if(ctx.block.height >= 12575447 && (content1.includes(BASE_TAG) || content1.includes(ITEMS_TAG))){
+        if(ctx.block.height >= 12575447 && !content1.includes('12574697') && (content1.includes(BASE_TAG) || content1.includes(ITEMS_TAG)) ){
           console.log('BURN => ' , rmrk);
 
           const nftBase = await getOrCreate(ctx.store, NFTS, content1);
